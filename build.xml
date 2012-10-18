@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<!-- LinkChecker                     -->
+<!-- Copyright (C) 2002 Matthew West -->
+<!-- $Id: build.xml,v 1.8 2005/02/06 01:34:48 mfw Exp $ -->
+
+<project name="LinkChecker" default="bin" basedir=".">
+ <property name="version" value="0.2" />
+<!-- Build values -->
+ <property name="src.dir" value="java"/>
+ <property name="lib.dir" value="bin"/>
+ <property name="build.dir" value="build"/>
+ <property name="build.classes" value="${build.dir}/classes"/>
+ <property name="build.javadoc" value="${build.dir}/javadoc"/>
+ <property name="bin.dir" value="bin"/>
+ <property name="doc.dir" value="doc" />
+ <property name="jar.file" value="${ant.project.name}.jar" />
+ <property name="backup" location="/home/mfw/backup" />
+ <fileset id="dist.extras" dir="./">
+  <include name="build.xml" />
+  <include name="manifest" />
+  <include name="README" />
+  <include name="LICENSE" />
+ </fileset>
+
+ <path id="classpath">
+  <pathelement location="${lib}" />
+ </path> 
+
+ <target name="init"
+         description="--> Initialises time stamp and filters">
+  <tstamp>
+   <format property="time.stamp" pattern="dd-MMMM-yyyy hh:mm" locale="en" />
+   <format property="backup.time" pattern="yyyyMMdd-HHmm" />
+  </tstamp>  
+  <filterset id="dist.filter">
+   <filter token="VERSION" value="${version}" />
+   <filter token="TIME" value="${time.stamp}" />
+  </filterset>
+  <uptodate property="javadoc.done" targetfile="${build.javadoc}/packages.html">
+   <srcfiles dir="${src.dir}" includes="**/*.java" />
+  </uptodate>
+ </target>
+
+ <target name="build"
+         depends="init"
+         description="--> Builds the project">
+  <mkdir dir="${build.dir}"/>
+  <mkdir dir="${build.classes}"/>
+  <javac srcdir="${src.dir}"
+         destdir="${build.classes}"
+         debug="true">
+   <classpath refid="classpath" />
+  </javac>
+ </target>
+
+ <target name="jar"
+         depends="build"
+	 description="--> Creates the jar file">
+  <jar jarfile="${build.dir}/${jar.file}"
+       manifest="manifest">
+   <fileset dir="${build.classes}" />
+   <fileset dir="data" />
+  </jar>     
+ </target>
+
+ <target name="bin"
+         depends="jar"
+	 description="--> Builds full programs">
+  <mkdir dir="${bin.dir}" />
+  <copy todir="${bin.dir}">
+   <fileset dir="${lib.dir}"/>
+  </copy>
+  <copy todir="${bin.dir}" file="${build.dir}/${jar.file}"/>
+ </target>
+
+ <target name="javadoc"
+         depends="init"
+         unless="javadoc.done"
+         description="--> Builds javadoc">
+  <mkdir dir="${build.javadoc}" />
+  <javadoc defaultexcludes="yes"
+           destdir="${build.javadoc}"
+           author="true"
+           version="true"
+           access="private"
+	   nodeprecatedlist="true"
+           windowtitle="${ant.project.name}-${version} Javadoc">
+   <fileset dir="${src.dir}" includes="**/*.java" />
+   <link href="http://java.sun.com/products/jdk/1.2/docs/api/" offline="yes" 
+         packagelistLoc="/home/mfw/src/java/jdk/package-list" />
+   <link href="http://xml.apache.org/xerces2-j/javadocs/api/" offline="yes" 
+         packagelistLoc="/home/mfw/src/java/xerces-package-list" />
+   <doctitle><![CDATA[<h1>${ant.project.name}-${version}</h1>]]></doctitle>
+   <header>
+    <![CDATA[
+     Project homepage:
+     <a href="http://www.matthewwest.co.uk/computing/link-checker.html" title="Website">
+      www.matthewwest.co.uk
+     </a> 
+    ]]>
+   </header> 
+   <bottom><![CDATA[<i>Copyright &#169; 2002-2005 Matthew West. All Rights Reserved.</i>]]></bottom>
+  </javadoc>
+ </target>
+
+ <target name="dist"
+         depends="bin, javadoc"
+         description="--> Builds a distribution zip file">
+  <property name="dist.dir" value="${ant.project.name}-${version}" />
+  <mkdir dir="${dist.dir}" />
+  <copy todir="${dist.dir}/${src.dir}">
+   <fileset dir="${src.dir}" excludes="'**/*.java,v'"/>
+   <filterset refid="dist.filter" />
+  </copy> 
+  <copy todir="${dist.dir}/${bin.dir}">
+   <fileset dir="${bin.dir}" />
+  </copy> 
+  <copy todir="${dist.dir}/data">
+   <fileset dir="./data" />
+  </copy>
+  <copy todir="${dist.dir}/${doc.dir}/javadoc">
+   <fileset dir="${build.javadoc}" />
+  </copy>
+  <copy todir="${dist.dir}/">
+   <fileset refid="dist.extras" />
+   <filterset refid="dist.filter" />
+  </copy> 
+  <zip zipfile="${dist.dir}.zip" basedir="${dist.dir}" update="yes" />
+  <tar tarfile="${dist.dir}.tar.gz" basedir="." includes="${dist.dir}/**/*" compression="gzip" />
+ </target>	 
+
+ <target name="test"
+         depends="bin"
+	 description="--> Tests Ant task.  Uses Slashdot, be ready to force it to stop...">
+  <taskdef name="checklinks"
+        classname="uk.co.matthewwest.LinkChecker.LinkCheckerTask"
+        classpath="${bin.dir}/${jar.file}"/>
+  <checklinks href="http://www.slashdot.org/index.html" delay="200" local="yes" />
+ </target>
+
+ <target name="backup"
+         depends="init"
+	 description="--> Backs up this directory">
+  <property name="backup.file" location="${backup}/${ant.project.name}-${backup.time}" />
+  <tar destfile="${backup.file}.tar.bz2" compression="bzip2" basedir="." 
+       excludes="build/**/* bin/**/* *.tar.gz *.zip ${ant.project.name}*/**/*" />
+ </target>
+
+ <target name="clean"
+         description="--> Removes files created by the build process">
+  <delete dir="${build.dir}" />
+  <delete> 
+   <fileset dir="." includes="**/*~" defaultexcludes="no"/>
+  </delete>
+ </target> 
+</project>

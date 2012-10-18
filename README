@@ -1,0 +1,64 @@
+$Id: README,v 1.1 2002/08/19 13:18:19 mfw Exp $
+
+			     Link Checker
+                            --------------
+
+Version : @VERSION@
+
+Copyright (C) 2002 Matthew West lc@matthewwest.co.uk www.matthewwest.co.uk/
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+    EXCEPTION: XercesImpl.jar is copyright The Apache Project, and is
+    released under the terms of the Apache Licence.
+    See LICENCE.apache
+
+  This program requires Java 2 v1.3 to run.  It can be run from
+the command line like this:
+
+java -jar bin/LinkChecker.jar http://www.yahoo.com -d4000
+
+  This will load Yahoo's home page, and will start checking that all
+the links from it work.  It will then load every page on www.yahoo.com
+that it finds links to, and check them too.  To avoid overloading the
+server there is a 4 second delay between each link.
+  To see more of what it is doing use -b.  If you have a sample of your
+website on your computer, and no connection to the internet you could
+use this command to check it:
+
+java -jar bin/LinkChecker file:///home/user/webpages/index.html -l
+
+  The -l stops it from checking pages that are not on the same server
+as the first page.
+
+Ant
+  The program can also be run from Ant.  To do this you need to set up
+the task like this:
+
+  <taskdef name="checklinks"
+        classname="uk.co.matthewwest.LinkChecker.LinkCheckerTask"
+        classpath="/path/to/LinkChecker.jar"/>
+
+Then you can call it like this
+
+  <checklinks href="http://localhost.localdomain/index.html"
+	      delay="200" local="no" />
+
+  The program uses an XML parser to read the webpages, and therefore
+only works on well formed HTML, more details can be found at
+www.w3c.org/.  There are some DTD's built into the .jar file, however
+if they are not there it will need to look on the internet for them.
+
+Matthew West lc@matthewwest.co.uk
